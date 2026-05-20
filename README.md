@@ -9,6 +9,7 @@ Asynchronous password cracker for Lab 11 from the PortSwigger Web Academy SQL In
 The vulnerability is a blind SQL Injection with a conditional response.
 
 ## How to use?
+-- NOTICE: config.json implemented. how to use coming soon. --
 1. In the code, change the values for the cookies to your cookie values for your running lab.  
 (In the function "getChar")
 2. Install required modules:
