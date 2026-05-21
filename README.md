@@ -9,7 +9,6 @@ Asynchronous password cracker for Lab 11 from the PortSwigger Web Academy SQL In
 The vulnerability is a blind SQL Injection with a conditional response.
 
 ## How to use?
--- NOTICE: config.json implemented. how to use coming soon. --
 1. Install required modules:
 ```shell
 python -m pip install -r requirements.txt
