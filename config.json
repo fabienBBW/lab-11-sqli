@@ -1,7 +1,7 @@
 {
-    "url": "https://0a1b009504ed3b8180587b370068005f.web-security-academy.net/",
-    "session": "0Zmo0EcqSMBONH2HVvlTkvVvFXm8kkrS",
-    "TrackingId": "ewDtT0aaty4gulZ8",
-    "http_proxy": "abc",
-    "https_proxy": "abc"
+    "url": "https://0a4e005e044fd592807a12de00af00a5.web-security-academy.net/",
+    "session": "kTG5oFJQBeJjstFJZhF2md7bPn31qcoN",
+    "TrackingId": "kMe8vEti1hOrxmvy",
+    "http_proxy": "http://127.0.0.1:8080",
+    "https_proxy": "https://127.0.0.1:8080"
 }
